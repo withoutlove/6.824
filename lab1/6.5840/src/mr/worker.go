@@ -118,17 +118,16 @@ func call(rpcname string, args interface{}, reply interface{}) bool {
 }
 
 // requestTask requests a task from the coordinator
-func requestTask(workerID int) (Task, int) {
+func requestTask(workerID int) Task {
 	args := RequestTaskArgs{WorkerID: workerID}
 	reply := RequestTaskReply{}
 
 	if call("Coordinator.RequestTask", &args, &reply) {
-		// Return the task and the worker ID (which might have been assigned by coordinator)
-		return reply.Task, args.WorkerID
+		return reply.Task
 	}
 
 	// If call fails, return NoTask
-	return Task{Type: NoTask}, workerID
+	return Task{Type: NoTask}
 }
 
 // reportTask reports task completion to the coordinator
