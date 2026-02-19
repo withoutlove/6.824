@@ -1,6 +1,8 @@
 package kvsrv
 
 import (
+	"time"
+
 	"6.5840/kvsrv1/rpc"
 	kvtest "6.5840/kvtest1"
 	tester "6.5840/tester1"
@@ -34,7 +36,8 @@ func (ck *Clerk) Get(key string) (string, rpc.Tversion, rpc.Err) {
 	for {
 		ok := ck.clnt.Call(ck.server, "KVServer.Get", args, &reply)
 		if !ok {
-			// RPC失败，继续重试
+			// RPC失败，等待后重试
+			time.Sleep(100 * time.Millisecond)
 			continue
 		}
 
@@ -46,7 +49,8 @@ func (ck *Clerk) Get(key string) (string, rpc.Tversion, rpc.Err) {
 			// 成功，返回值和版本
 			return reply.Value, reply.Version, rpc.OK
 		}
-		// 其他错误（理论上不应该有其他错误），继续重试
+		// 其他错误，等待后重试
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 
@@ -80,8 +84,9 @@ func (ck *Clerk) Put(key, value string, version rpc.Tversion) rpc.Err {
 	for {
 		ok := ck.clnt.Call(ck.server, "KVServer.Put", args, &reply)
 		if !ok {
-			// RPC失败，继续重试
+			// RPC失败，等待后重试
 			firstTry = false
+			time.Sleep(100 * time.Millisecond)
 			continue
 		}
 
@@ -103,8 +108,9 @@ func (ck *Clerk) Put(key, value string, version rpc.Tversion) rpc.Err {
 				return rpc.ErrMaybe
 			}
 		default:
-			// 其他错误，继续重试
+			// 其他错误，等待后重试
 			firstTry = false
+			time.Sleep(100 * time.Millisecond)
 		}
 	}
 }
