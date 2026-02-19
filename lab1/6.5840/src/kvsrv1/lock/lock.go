@@ -95,16 +95,25 @@ func (lk *Lock) Release() {
 			if val == lk.clientID {
 				// 尝试释放锁：将值从客户端ID改为空字符串
 				err2 := lk.ck.Put(lk.name, "", ver)
-				if err2 == rpc.OK || err2 == rpc.ErrMaybe {
-					// 成功释放或可能已释放
+				if err2 == rpc.OK {
+					// 成功释放
 					return
+				} else if err2 == rpc.ErrMaybe {
+					// 不确定是否成功，需要验证
+					// 再次获取锁状态检查
+					val2, _, err3 := lk.ck.Get(lk.name)
+					if err3 == rpc.OK && val2 == "" {
+						// 锁已被释放（值为空）
+						return
+					}
+					// 锁未被释放，继续尝试
 				}
 			} else if val == "" {
 				// 锁已经是释放状态
 				return
 			} else {
 				// 锁被其他客户端持有，不能释放
-				// 在这个简单实现中，我们直接返回
+				// 直接返回，因为这不是我们的锁
 				return
 			}
 		}
